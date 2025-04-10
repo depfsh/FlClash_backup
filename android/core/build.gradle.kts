@@ -13,11 +13,16 @@ android {
     defaultConfig {
         minSdk = 21
         consumerProguardFiles("consumer-rules.pro")
+        externalNativeBuild {
+            cmake {
+                cppFlags("-D_LIBCLASH")
+            }
+        }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -53,10 +58,6 @@ tasks.withType<MergeSourceSetFolders>().configureEach {
     dependsOn("copyNativeLibs")
 }
 
-dependencies {
-    implementation("androidx.core:core-ktx:1.15.0")
-}
-
 afterEvaluate {
     tasks.named("assembleDebug").configure {
         dependsOn("copyNativeLibs")
@@ -64,4 +65,8 @@ afterEvaluate {
     tasks.named("assembleRelease").configure {
         dependsOn("copyNativeLibs")
     }
+}
+
+dependencies {
+    implementation("androidx.core:core-ktx:1.15.0")
 }

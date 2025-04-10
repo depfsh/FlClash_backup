@@ -1,12 +1,17 @@
 package com.follow.clash.core
 
+import java.net.InetSocketAddress
+
+
 class Core {
 
-    fun hello(){
+    external fun startTun(
+        fd: Int,
+        markSocket: (Int) -> Boolean,
+        querySocketUid: (protocol: Int, source: InetSocketAddress, target: InetSocketAddress) -> Int
+    )
 
-    }
-
-    external fun stringFromJNI(): String
+    external fun stopTun()
 
     companion object {
         init {

@@ -2,14 +2,20 @@
 #include <string>
 
 #ifdef _LIBCLASH
-#include "libclash.h"
-#endif
 
-extern "C" JNIEXPORT jstring JNICALL
-Java_com_follow_clash_core_Core_stringFromJNI(
-        JNIEnv* env,
-        jobject /* this */) {
-    std::string hello = "Hello from C++";
-    return env->NewStringUTF(hello.c_str());
+#include "libclash.h"
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_follow_clash_core_Core_startTun(JNIEnv *env, jobject thiz, jint fd, jobject mark_socket,
+                                         jobject query_socket_uid) {
+
+    startTUN(fd);
 }
 
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_follow_clash_core_Core_stopTun(JNIEnv *env, jobject thiz) {
+    stopTun();
+}
+#endif
