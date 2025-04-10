@@ -3,27 +3,12 @@
 package main
 
 /*
-#include <stddef.h>
-#include <stdint.h>
-#include <malloc.h>
-
-extern void (*mark_socket_func)(void *tun_interface, int fd);
-extern int (*query_socket_uid_func)(void *tun_interface, int protocol, const char *source, const char *target);
-
-void mark_socket(void *interface, int fd) {
-    mark_socket_func(interface, fd);
-}
-
-int query_socket_uid(void *interface, int protocol, char *source, char *target) {
-    int result = query_socket_uid_func(interface, protocol, source, target);
-    free(source);
-    free(target);
-    return result;
-}
+extern int myVar;
 */
 import "C"
 import (
 	"context"
+	abridge "core/android-bride"
 	bridge "core/dart-bridge"
 	"core/platform"
 	"core/state"
@@ -77,7 +62,7 @@ func (t *TunHandler) markSocket(fd int) {
 		return
 	}
 
-	C.mark_socket(t.callback, C.int(fd))
+	abridge.MarkSocket(t.callback, fd)
 }
 
 func (t *TunHandler) querySocketUid(protocol int, source, target string) int {
@@ -87,7 +72,8 @@ func (t *TunHandler) querySocketUid(protocol int, source, target string) int {
 	if t.listener == nil {
 		return -1
 	}
-	return int(C.query_socket_uid(t.callback, C.int(protocol), C.CString(source), C.CString(target)))
+
+	return abridge.QuerySocketUid(t.callback, protocol, source, target)
 }
 
 type Fd struct {
