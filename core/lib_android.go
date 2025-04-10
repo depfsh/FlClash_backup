@@ -3,12 +3,9 @@
 package main
 
 /*
-#include <cstdint>
-#include <cstdlib>
+#include <stddef.h>
+#include <stdint.h>
 #include <malloc.h>
-
-extern void mark_socket(void *interface, int fd);
-extern int query_socket_uid(void *interface, int protocol, char *source, char *target);
 
 extern void (*mark_socket_func)(void *tun_interface, int fd);
 extern int (*query_socket_uid_func)(void *tun_interface, int protocol, const char *source, const char *target);
@@ -342,7 +339,8 @@ func startTUN(fd C.int, callback unsafe.Pointer) bool {
 	handleStopTun()
 	tunLock.Lock()
 	defer tunLock.Unlock()
-	if fd == 0 {
+	f := int(fd)
+	if f == 0 {
 		now := time.Now()
 		runTime = &now
 	} else {
@@ -350,7 +348,7 @@ func startTUN(fd C.int, callback unsafe.Pointer) bool {
 			callback: callback,
 		}
 		tunHandler.init()
-		tunListener, _ := t.Start(fd, currentConfig.General.Tun.Device, currentConfig.General.Tun.Stack)
+		tunListener, _ := t.Start(f, currentConfig.General.Tun.Device, currentConfig.General.Tun.Stack)
 		if tunListener != nil {
 			log.Infoln("TUN address: %v", tunListener.Address())
 		} else {
