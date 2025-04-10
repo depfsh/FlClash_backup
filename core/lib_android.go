@@ -2,8 +2,31 @@
 
 package main
 
+/*
+#include <cstdint>
+#include <cstdlib>
+#include <malloc.h>
+
+extern void mark_socket(void *interface, int fd);
+extern int query_socket_uid(void *interface, int protocol, char *source, char *target);
+
+extern void (*mark_socket_func)(void *tun_interface, int fd);
+extern int (*query_socket_uid_func)(void *tun_interface, int protocol, const char *source, const char *target);
+
+void mark_socket(void *interface, int fd) {
+    mark_socket_func(interface, fd);
+}
+
+int query_socket_uid(void *interface, int protocol, char *source, char *target) {
+    int result = query_socket_uid_func(interface, protocol, source, target);
+    free(source);
+    free(target);
+    return result;
+}
+*/
 import "C"
 import (
+	"context"
 	bridge "core/dart-bridge"
 	"core/platform"
 	"core/state"
@@ -18,12 +41,57 @@ import (
 	"github.com/metacubex/mihomo/dns"
 	"github.com/metacubex/mihomo/listener/sing_tun"
 	"github.com/metacubex/mihomo/log"
+	"golang.org/x/sync/semaphore"
 	"strconv"
 	"strings"
 	"sync"
 	"syscall"
 	"time"
+	"unsafe"
 )
+
+type TunHandler struct {
+	listener *sing_tun.Listener
+	callback unsafe.Pointer
+
+	limit *semaphore.Weighted
+}
+
+func (t *TunHandler) init() {
+	initTunHook()
+}
+
+func (t *TunHandler) close() {
+	_ = t.limit.Acquire(context.TODO(), 4)
+	defer t.limit.Release(4)
+
+	removeTunHook()
+	if t.listener != nil {
+		_ = t.listener.Close()
+	}
+	t.listener = nil
+}
+
+func (t *TunHandler) markSocket(fd int) {
+	_ = t.limit.Acquire(context.Background(), 1)
+	defer t.limit.Release(1)
+
+	if t.listener == nil {
+		return
+	}
+
+	C.mark_socket(t.callback, C.int(fd))
+}
+
+func (t *TunHandler) querySocketUid(protocol int, source, target string) int {
+	_ = t.limit.Acquire(context.Background(), 1)
+	defer t.limit.Release(1)
+
+	if t.listener == nil {
+		return -1
+	}
+	return int(C.query_socket_uid(t.callback, C.int(protocol), C.CString(source), C.CString(target)))
+}
 
 type Fd struct {
 	Id    string `json:"id"`
@@ -88,42 +156,19 @@ func (m *InvokeManager) await(id string) string {
 
 var (
 	invokePort       int64 = -1
-	tunListener      *sing_tun.Listener
-	fdInvokeMap      = NewInvokeManager()
-	processInvokeMap = NewInvokeManager()
+	fdInvokeMap            = NewInvokeManager()
+	processInvokeMap       = NewInvokeManager()
 	tunLock          sync.Mutex
 	runTime          *time.Time
 	errBlocked       = errors.New("blocked")
+	tunHandler       TunHandler
 )
-
-func handleStartTun(fd int) string {
-	handleStopTun()
-	tunLock.Lock()
-	defer tunLock.Unlock()
-	if fd == 0 {
-		now := time.Now()
-		runTime = &now
-	} else {
-		initSocketHook()
-		tunListener, _ = t.Start(fd, currentConfig.General.Tun.Device, currentConfig.General.Tun.Stack)
-		if tunListener != nil {
-			log.Infoln("TUN address: %v", tunListener.Address())
-		}
-		now := time.Now()
-		runTime = &now
-	}
-	return handleGetRunTime()
-}
 
 func handleStopTun() {
 	tunLock.Lock()
 	defer tunLock.Unlock()
-	removeSocketHook()
 	runTime = nil
-	if tunListener != nil {
-		log.Infoln("TUN close")
-		_ = tunListener.Close()
-	}
+	tunHandler.close()
 }
 
 func handleGetRunTime() string {
@@ -173,7 +218,7 @@ func handleSetFdMap(id string) {
 	}()
 }
 
-func initSocketHook() {
+func initTunHook() {
 	dialer.DefaultSocketHook = func(network, address string, conn syscall.RawConn) error {
 		if platform.ShouldBlockConnection() {
 			return errBlocked
@@ -190,13 +235,6 @@ func initSocketHook() {
 			fdInvokeMap.await(id)
 		})
 	}
-}
-
-func removeSocketHook() {
-	dialer.DefaultSocketHook = nil
-}
-
-func init() {
 	process.DefaultPackageNameResolver = func(metadata *constant.Metadata) (string, error) {
 		if metadata == nil {
 			return "", process.ErrInvalidNetwork
@@ -208,6 +246,11 @@ func init() {
 		})
 		return processInvokeMap.await(id), nil
 	}
+}
+
+func removeTunHook() {
+	dialer.DefaultSocketHook = nil
+	process.DefaultPackageNameResolver = nil
 }
 
 func handleGetAndroidVpnOptions() string {
@@ -250,16 +293,6 @@ func handleGetCurrentProfileName() string {
 
 func nextHandle(action *Action, result func(data interface{})) bool {
 	switch action.Method {
-	case startTunMethod:
-		data := action.Data.(string)
-		var fd int
-		_ = json.Unmarshal([]byte(data), &fd)
-		result(handleStartTun(fd))
-		return true
-	case stopTunMethod:
-		handleStopTun()
-		result(true)
-		return true
 	case getAndroidVpnOptionsMethod:
 		result(handleGetAndroidVpnOptions())
 		return true
@@ -305,9 +338,30 @@ func quickStart(dirChar *C.char, paramsChar *C.char, stateParamsChar *C.char, po
 }
 
 //export startTUN
-func startTUN(fd C.int) *C.char {
-	f := int(fd)
-	return C.CString(handleStartTun(f))
+func startTUN(fd C.int, callback unsafe.Pointer) bool {
+	handleStopTun()
+	tunLock.Lock()
+	defer tunLock.Unlock()
+	if fd == 0 {
+		now := time.Now()
+		runTime = &now
+	} else {
+		tunHandler = TunHandler{
+			callback: callback,
+		}
+		tunHandler.init()
+		tunListener, _ := t.Start(fd, currentConfig.General.Tun.Device, currentConfig.General.Tun.Stack)
+		if tunListener != nil {
+			log.Infoln("TUN address: %v", tunListener.Address())
+		} else {
+			tunHandler.close()
+			return false
+		}
+		tunHandler.listener = tunListener
+		now := time.Now()
+		runTime = &now
+	}
+	return true
 }
 
 //export getRunTime

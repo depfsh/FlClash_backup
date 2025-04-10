@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.22.1)
 
 project("core")
 add_library(${CMAKE_PROJECT_NAME} SHARED
+        jni_helper.cpp
         core.cpp)
 
 set(LIB_CLASH_PATH "${CMAKE_SOURCE_DIR}/../jniLibs/${ANDROID_ABI}/libclash.so")
