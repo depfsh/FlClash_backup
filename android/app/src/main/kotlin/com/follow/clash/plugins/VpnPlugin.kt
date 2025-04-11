@@ -14,6 +14,7 @@ import androidx.core.content.getSystemService
 import com.follow.clash.FlClashApplication
 import com.follow.clash.GlobalState
 import com.follow.clash.RunState
+import com.follow.clash.core.Core
 import com.follow.clash.extensions.awaitResult
 import com.follow.clash.extensions.getProtocol
 import com.follow.clash.extensions.resolveDns
@@ -162,10 +163,9 @@ data object VpnPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     }
 
     private fun handleStartVpn() {
-        GlobalState.getCurrentAppPlugin()
-            ?.requestVpnPermission {
-                handleStartService()
-            }
+        GlobalState.getCurrentAppPlugin()?.requestVpnPermission {
+            handleStartService()
+        }
     }
 
     fun requestGc() {
@@ -257,10 +257,19 @@ data object VpnPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
             if (GlobalState.runState.value == RunState.START) return
             GlobalState.runState.value = RunState.START
             val fd = flClashService?.start(options)
-            flutterMethodChannel.invokeMethod(
-                "started", fd
-            )
-            startForegroundJob();
+            Core.startTun(
+                fd = fd ?: 0,
+                markSocket = { it: Int ->
+                    (flClashService as? FlClashVpnService)?.protect(it) == true
+                },
+                querySocketUid = { protocol: Int, source: InetSocketAddress, target: InetSocketAddress ->
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                        -1
+                    } else {
+                        connectivity?.getConnectionOwnerUid(protocol, source, target) ?: -1
+                    }
+                })
+            startForegroundJob()
         }
     }
 

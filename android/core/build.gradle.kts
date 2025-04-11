@@ -12,21 +12,27 @@ android {
 
     defaultConfig {
         minSdk = 21
-        consumerProguardFiles("consumer-rules.pro")
-        externalNativeBuild {
-            cmake {
-                cppFlags("-D_LIBCLASH")
-            }
-        }
+//        consumerProguardFiles("consumer-rules.pro")
+//        externalNativeBuild {
+//            cmake {
+//                cppFlags("")
+//            }
+//        }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            isMinifyEnabled = false
+//            proguardFiles(
+//                getDefaultProguardFile("proguard-android-optimize.txt"),
+//                "proguard-rules.pro"
+//            )
+        }
+    }
+
+    sourceSets {
+        getByName("main") {
+            jniLibs.srcDirs("src/main/jniLibs")
         }
     }
 

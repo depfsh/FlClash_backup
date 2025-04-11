@@ -2348,6 +2348,70 @@ class ClashFFI {
 
   set suboptarg(ffi.Pointer<ffi.Char> value) => _suboptarg.value = value;
 
+  void call_mark_socket(
+    mark_socket_func fn,
+    ffi.Pointer<ffi.Void> tun_interface,
+    int fd,
+  ) {
+    return _call_mark_socket(
+      fn,
+      tun_interface,
+      fd,
+    );
+  }
+
+  late final _call_mark_socketPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(mark_socket_func, ffi.Pointer<ffi.Void>,
+              ffi.Int)>>('call_mark_socket');
+  late final _call_mark_socket = _call_mark_socketPtr.asFunction<
+      void Function(mark_socket_func, ffi.Pointer<ffi.Void>, int)>();
+
+  int call_query_socket_uid(
+    query_socket_uid_func fn,
+    ffi.Pointer<ffi.Void> tun_interface,
+    int protocol,
+    ffi.Pointer<ffi.Char> source,
+    ffi.Pointer<ffi.Char> target,
+  ) {
+    return _call_query_socket_uid(
+      fn,
+      tun_interface,
+      protocol,
+      source,
+      target,
+    );
+  }
+
+  late final _call_query_socket_uidPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(
+              query_socket_uid_func,
+              ffi.Pointer<ffi.Void>,
+              ffi.Int,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>)>>('call_query_socket_uid');
+  late final _call_query_socket_uid = _call_query_socket_uidPtr.asFunction<
+      int Function(query_socket_uid_func, ffi.Pointer<ffi.Void>, int,
+          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+
+  void registerCallbacks(
+    mark_socket_func MarkSocketFunc,
+    query_socket_uid_func QuerySocketUidFunc,
+  ) {
+    return _registerCallbacks(
+      MarkSocketFunc,
+      QuerySocketUidFunc,
+    );
+  }
+
+  late final _registerCallbacksPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              mark_socket_func, query_socket_uid_func)>>('registerCallbacks');
+  late final _registerCallbacks = _registerCallbacksPtr
+      .asFunction<void Function(mark_socket_func, query_socket_uid_func)>();
+
   void initNativeApiBridge(
     ffi.Pointer<ffi.Void> api,
   ) {
@@ -2479,19 +2543,21 @@ class ClashFFI {
       void Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
           ffi.Pointer<ffi.Char>, int)>();
 
-  ffi.Pointer<ffi.Char> startTUN(
+  int startTUN(
     int fd,
+    ffi.Pointer<ffi.Void> callback,
   ) {
     return _startTUN(
       fd,
+      callback,
     );
   }
 
-  late final _startTUNPtr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Int)>>(
-          'startTUN');
+  late final _startTUNPtr = _lookup<
+          ffi.NativeFunction<GoUint8 Function(ffi.Int, ffi.Pointer<ffi.Void>)>>(
+      'startTUN');
   late final _startTUN =
-      _startTUNPtr.asFunction<ffi.Pointer<ffi.Char> Function(int)>();
+      _startTUNPtr.asFunction<int Function(int, ffi.Pointer<ffi.Void>)>();
 
   ffi.Pointer<ffi.Char> getRunTime() {
     return _getRunTime();
@@ -3738,6 +3804,24 @@ typedef mode_t = __darwin_mode_t;
 typedef __darwin_mode_t = __uint16_t;
 typedef __uint16_t = ffi.UnsignedShort;
 typedef Dart__uint16_t = int;
+typedef mark_socket_func
+    = ffi.Pointer<ffi.NativeFunction<mark_socket_funcFunction>>;
+typedef mark_socket_funcFunction = ffi.Void Function(
+    ffi.Pointer<ffi.Void> tun_interface, ffi.Int fd);
+typedef Dartmark_socket_funcFunction = void Function(
+    ffi.Pointer<ffi.Void> tun_interface, int fd);
+typedef query_socket_uid_func
+    = ffi.Pointer<ffi.NativeFunction<query_socket_uid_funcFunction>>;
+typedef query_socket_uid_funcFunction = ffi.Int Function(
+    ffi.Pointer<ffi.Void> tun_interface,
+    ffi.Int protocol,
+    ffi.Pointer<ffi.Char> source,
+    ffi.Pointer<ffi.Char> target);
+typedef Dartquery_socket_uid_funcFunction = int Function(
+    ffi.Pointer<ffi.Void> tun_interface,
+    int protocol,
+    ffi.Pointer<ffi.Char> source,
+    ffi.Pointer<ffi.Char> target);
 
 final class GoInterface extends ffi.Struct {
   external ffi.Pointer<ffi.Void> t;
@@ -3758,6 +3842,8 @@ final class GoSlice extends ffi.Struct {
 typedef GoInt = GoInt64;
 typedef GoInt64 = ffi.LongLong;
 typedef DartGoInt64 = int;
+typedef GoUint8 = ffi.UnsignedChar;
+typedef DartGoUint8 = int;
 
 const int __has_safe_buffers = 1;
 
@@ -3973,6 +4059,8 @@ const int __MAC_15_0 = 150000;
 
 const int __MAC_15_1 = 150100;
 
+const int __MAC_15_2 = 150200;
+
 const int __IPHONE_2_0 = 20000;
 
 const int __IPHONE_2_1 = 20100;
@@ -4135,6 +4223,8 @@ const int __IPHONE_18_0 = 180000;
 
 const int __IPHONE_18_1 = 180100;
 
+const int __IPHONE_18_2 = 180200;
+
 const int __WATCHOS_1_0 = 10000;
 
 const int __WATCHOS_2_0 = 20000;
@@ -4232,6 +4322,8 @@ const int __WATCHOS_10_5 = 100500;
 const int __WATCHOS_11_0 = 110000;
 
 const int __WATCHOS_11_1 = 110100;
+
+const int __WATCHOS_11_2 = 110200;
 
 const int __TVOS_9_0 = 90000;
 
@@ -4333,6 +4425,8 @@ const int __TVOS_18_0 = 180000;
 
 const int __TVOS_18_1 = 180100;
 
+const int __TVOS_18_2 = 180200;
+
 const int __BRIDGEOS_2_0 = 20000;
 
 const int __BRIDGEOS_3_0 = 30000;
@@ -4389,6 +4483,8 @@ const int __BRIDGEOS_9_0 = 90000;
 
 const int __BRIDGEOS_9_1 = 90100;
 
+const int __BRIDGEOS_9_2 = 90200;
+
 const int __DRIVERKIT_19_0 = 190000;
 
 const int __DRIVERKIT_20_0 = 200000;
@@ -4419,6 +4515,8 @@ const int __DRIVERKIT_24_0 = 240000;
 
 const int __DRIVERKIT_24_1 = 240100;
 
+const int __DRIVERKIT_24_2 = 240200;
+
 const int __VISIONOS_1_0 = 10000;
 
 const int __VISIONOS_1_1 = 10100;
@@ -4428,6 +4526,8 @@ const int __VISIONOS_1_2 = 10200;
 const int __VISIONOS_2_0 = 20000;
 
 const int __VISIONOS_2_1 = 20100;
+
+const int __VISIONOS_2_2 = 20200;
 
 const int MAC_OS_X_VERSION_10_0 = 1000;
 
@@ -4555,9 +4655,11 @@ const int MAC_OS_VERSION_15_0 = 150000;
 
 const int MAC_OS_VERSION_15_1 = 150100;
 
+const int MAC_OS_VERSION_15_2 = 150200;
+
 const int __MAC_OS_X_VERSION_MIN_REQUIRED = 150000;
 
-const int __MAC_OS_X_VERSION_MAX_ALLOWED = 150100;
+const int __MAC_OS_X_VERSION_MAX_ALLOWED = 150200;
 
 const int __ENABLE_LEGACY_MAC_AVAILABILITY = 1;
 

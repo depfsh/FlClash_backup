@@ -4,7 +4,7 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.URL
 
-class Core {
+data object Core {
     private external fun startTun(
         fd: Int,
         cb: TunInterface
@@ -38,9 +38,7 @@ class Core {
 
     external fun stopTun()
 
-    companion object {
-        init {
-            System.loadLibrary("core")
-        }
+    init {
+        System.loadLibrary("core")
     }
 }

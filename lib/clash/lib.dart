@@ -122,25 +122,12 @@ class ClashLib extends ClashHandlerInterface with AndroidClashInterface {
     );
   }
 
-  @override
-  Future<DateTime?> startTun(int fd) async {
-    final res = await invoke<String>(
-      method: ActionMethod.startTun,
-      data: json.encode(fd),
-    );
-
-    if (res.isEmpty) {
-      return null;
-    }
-    return DateTime.fromMillisecondsSinceEpoch(int.parse(res));
-  }
-
-  @override
-  Future<bool> stopTun() {
-    return invoke<bool>(
-      method: ActionMethod.stopTun,
-    );
-  }
+  // @override
+  // Future<bool> stopTun() {
+  //   return invoke<bool>(
+  //     method: ActionMethod.stopTun,
+  //   );
+  // }
 
   @override
   Future<AndroidVpnOptions?> getAndroidVpnOptions() async {
@@ -230,13 +217,13 @@ class ClashLibHandler {
     );
   }
 
-  DateTime? startTun(int fd) {
-    final runTimeRaw = clashFFI.startTUN(fd);
-    final runTimeString = runTimeRaw.cast<Utf8>().toDartString();
-    clashFFI.freeCString(runTimeRaw);
-    if (runTimeString.isEmpty) return null;
-    return DateTime.fromMillisecondsSinceEpoch(int.parse(runTimeString));
-  }
+  // DateTime? startTun(int fd) {
+  //   final runTimeRaw = clashFFI.startTUN(fd);
+  //   final runTimeString = runTimeRaw.cast<Utf8>().toDartString();
+  //   clashFFI.freeCString(runTimeRaw);
+  //   if (runTimeString.isEmpty) return null;
+  //   return DateTime.fromMillisecondsSinceEpoch(int.parse(runTimeString));
+  // }
 
   stopTun() {
     clashFFI.stopTun();

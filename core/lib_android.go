@@ -8,11 +8,9 @@ import (
 	bridge "core/dart-bridge"
 	"core/platform"
 	"core/state"
-	t "core/tun"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/metacubex/mihomo/common/utils"
 	"github.com/metacubex/mihomo/component/dialer"
 	"github.com/metacubex/mihomo/component/process"
 	"github.com/metacubex/mihomo/constant"
@@ -203,27 +201,21 @@ func initTunHook() {
 			return errBlocked
 		}
 		return conn.Control(func(fd uintptr) {
-			fdInt := int64(fd)
-			id := utils.NewUUIDV1().String()
-
-			handleMarkSocket(Fd{
-				Id:    id,
-				Value: fdInt,
-			})
-
-			fdInvokeMap.await(id)
+			tunHandler.markSocket(int(fd))
 		})
 	}
 	process.DefaultPackageNameResolver = func(metadata *constant.Metadata) (string, error) {
-		if metadata == nil {
-			return "", process.ErrInvalidNetwork
-		}
-		id := utils.NewUUIDV1().String()
-		handleParseProcess(Process{
-			Id:       id,
-			Metadata: metadata,
-		})
-		return processInvokeMap.await(id), nil
+		//if metadata == nil {
+		//	return "", process.ErrInvalidNetwork
+		//}
+		//tunHandler.querySocketUid(protocol, source.String(), target.String())
+		//id := utils.NewUUIDV1().String()
+		//handleParseProcess(Process{
+		//	Id:       id,
+		//	Metadata: metadata,
+		//})
+		//return processInvokeMap.await(id), nil
+		return "", nil
 	}
 }
 
@@ -318,29 +310,29 @@ func quickStart(dirChar *C.char, paramsChar *C.char, stateParamsChar *C.char, po
 
 //export startTUN
 func startTUN(fd C.int, callback unsafe.Pointer) bool {
-	handleStopTun()
-	tunLock.Lock()
-	defer tunLock.Unlock()
-	f := int(fd)
-	if f == 0 {
-		now := time.Now()
-		runTime = &now
-	} else {
-		tunHandler = TunHandler{
-			callback: callback,
-		}
-		tunHandler.init()
-		tunListener, _ := t.Start(f, currentConfig.General.Tun.Device, currentConfig.General.Tun.Stack)
-		if tunListener != nil {
-			log.Infoln("TUN address: %v", tunListener.Address())
-		} else {
-			tunHandler.close()
-			return false
-		}
-		tunHandler.listener = tunListener
-		now := time.Now()
-		runTime = &now
-	}
+	//handleStopTun()
+	//tunLock.Lock()
+	//defer tunLock.Unlock()
+	//f := int(fd)
+	//if f == 0 {
+	//	now := time.Now()
+	//	runTime = &now
+	//} else {
+	//	tunHandler = TunHandler{
+	//		callback: callback,
+	//	}
+	//	tunHandler.init()
+	//	tunListener, _ := t.Start(f, currentConfig.General.Tun.Device, currentConfig.General.Tun.Stack)
+	//	if tunListener != nil {
+	//		log.Infoln("TUN address: %v", tunListener.Address())
+	//	} else {
+	//		tunHandler.close()
+	//		return false
+	//	}
+	//	tunHandler.listener = tunListener
+	//	now := time.Now()
+	//	runTime = &now
+	//}
 	return true
 }
 

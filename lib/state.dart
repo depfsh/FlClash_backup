@@ -110,7 +110,7 @@ class GlobalState {
   Future handleStop() async {
     startTime = null;
     await clashCore.stopListener();
-    await clashLib?.stopTun();
+    // await clashLib?.stopTun();
     await service?.stopVpn();
     stopUpdateTasks();
   }

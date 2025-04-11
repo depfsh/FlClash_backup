@@ -74,11 +74,9 @@ mixin AndroidClashInterface {
 
   Future<bool> setProcessMap(ProcessMapItem item);
 
-  Future<bool> stopTun();
+  // Future<bool> stopTun();
 
   Future<bool> updateDns(String value);
-
-  Future<DateTime?> startTun(int fd);
 
   Future<AndroidVpnOptions?> getAndroidVpnOptions();
 
