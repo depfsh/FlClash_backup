@@ -2,13 +2,9 @@
 
 package main
 
-/*
-extern int myVar;
-*/
 import "C"
 import (
 	"context"
-	abridge "core/android-bride"
 	bridge "core/dart-bridge"
 	"core/platform"
 	"core/state"
@@ -62,7 +58,7 @@ func (t *TunHandler) markSocket(fd int) {
 		return
 	}
 
-	abridge.MarkSocket(t.callback, fd)
+	MarkSocket(t.callback, fd)
 }
 
 func (t *TunHandler) querySocketUid(protocol int, source, target string) int {
@@ -73,7 +69,7 @@ func (t *TunHandler) querySocketUid(protocol int, source, target string) int {
 		return -1
 	}
 
-	return abridge.QuerySocketUid(t.callback, protocol, source, target)
+	return QuerySocketUid(t.callback, protocol, source, target)
 }
 
 type Fd struct {

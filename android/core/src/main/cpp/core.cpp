@@ -9,7 +9,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_follow_clash_core_Core_startTun(JNIEnv *env, jobject thiz, jint fd, jobject cb) {
     auto interface = new_global(cb);
-    startTUN(fd);
+    startTUN(fd, interface);
 }
 
 extern "C"
@@ -21,6 +21,13 @@ Java_com_follow_clash_core_Core_stopTun(JNIEnv *env, jobject thiz) {
 
 static jmethodID m_tun_interface_mark_socket;
 static jmethodID m_tun_interface_query_socket_uid;
+
+static void call_tun_interface_mark_socket_impl(void *tun_interface, int fd) {
+    ATTACH_JNI();
+    env->CallVoidMethod((jobject) tun_interface,
+                        (jmethodID) m_tun_interface_mark_socket,
+                        (jint) fd);
+}
 
 static int
 call_tun_interface_query_socket_uid_impl(void *tun_interface, int protocol,
@@ -50,7 +57,8 @@ JNI_OnLoad(JavaVM *vm, void *reserved) {
     m_tun_interface_query_socket_uid = find_method(c_tun_interface, "querySocketUid",
                                                    "(ILjava/lang/String;Ljava/lang/String;)I");
 
-    query_socket_uid_func = &call_tun_interface_query_socket_uid_impl;
+    registerCallbacks(&call_tun_interface_mark_socket_impl,
+                      &call_tun_interface_query_socket_uid_impl);
     return JNI_VERSION_1_6;
 }
 
