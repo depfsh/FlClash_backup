@@ -33,10 +33,6 @@ type TunHandler struct {
 	limit *semaphore.Weighted
 }
 
-func (t *TunHandler) init() {
-	initTunHook()
-}
-
 func (t *TunHandler) close() {
 	_ = t.limit.Acquire(context.TODO(), 4)
 	defer t.limit.Release(4)
@@ -138,14 +134,42 @@ var (
 	tunLock          sync.Mutex
 	runTime          *time.Time
 	errBlocked       = errors.New("blocked")
-	tunHandler       TunHandler
+	tunHandler       *TunHandler
 )
 
 func handleStopTun() {
 	tunLock.Lock()
 	defer tunLock.Unlock()
 	runTime = nil
-	tunHandler.close()
+	if tunHandler != nil {
+		tunHandler.close()
+	}
+}
+
+func handleStartTun(fd int, callback unsafe.Pointer) bool {
+	handleStopTun()
+	if fd == 0 {
+		now := time.Now()
+		runTime = &now
+	} else {
+		tunLock.Lock()
+		defer tunLock.Unlock()
+		//tunHandler = &TunHandler{
+		//	callback: callback,
+		//}
+		//initTunHook()
+		//tunListener, _ := t.Start(fd, currentConfig.General.Tun.Device, currentConfig.General.Tun.Stack)
+		//if tunListener != nil {
+		//	log.Infoln("TUN address: %v", tunListener.Address())
+		//} else {
+		//	tunHandler.close()
+		//	return false
+		//}
+		//tunHandler.listener = tunListener
+		//now := time.Now()
+		//runTime = &now
+	}
+	return true
 }
 
 func handleGetRunTime() string {
@@ -310,30 +334,7 @@ func quickStart(dirChar *C.char, paramsChar *C.char, stateParamsChar *C.char, po
 
 //export startTUN
 func startTUN(fd C.int, callback unsafe.Pointer) bool {
-	//handleStopTun()
-	//tunLock.Lock()
-	//defer tunLock.Unlock()
-	//f := int(fd)
-	//if f == 0 {
-	//	now := time.Now()
-	//	runTime = &now
-	//} else {
-	//	tunHandler = TunHandler{
-	//		callback: callback,
-	//	}
-	//	tunHandler.init()
-	//	tunListener, _ := t.Start(f, currentConfig.General.Tun.Device, currentConfig.General.Tun.Stack)
-	//	if tunListener != nil {
-	//		log.Infoln("TUN address: %v", tunListener.Address())
-	//	} else {
-	//		tunHandler.close()
-	//		return false
-	//	}
-	//	tunHandler.listener = tunListener
-	//	now := time.Now()
-	//	runTime = &now
-	//}
-	return true
+	return handleStartTun(int(fd), callback)
 }
 
 //export getRunTime
