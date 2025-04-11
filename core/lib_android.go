@@ -8,6 +8,7 @@ import (
 	bridge "core/dart-bridge"
 	"core/platform"
 	"core/state"
+	t "core/tun"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -52,7 +53,7 @@ func (t *TunHandler) markSocket(fd int) {
 		return
 	}
 
-	MarkSocket(t.callback, fd)
+	markSocket(t.callback, fd)
 }
 
 func (t *TunHandler) querySocketUid(protocol int, source, target string) int {
@@ -62,8 +63,7 @@ func (t *TunHandler) querySocketUid(protocol int, source, target string) int {
 	if t.listener == nil {
 		return -1
 	}
-
-	return QuerySocketUid(t.callback, protocol, source, target)
+	return querySocketUid(t.callback, protocol, source, target)
 }
 
 type Fd struct {
@@ -157,14 +157,14 @@ func handleStartTun(fd int, callback unsafe.Pointer) bool {
 		//tunHandler = &TunHandler{
 		//	callback: callback,
 		//}
-		//initTunHook()
-		//tunListener, _ := t.Start(fd, currentConfig.General.Tun.Device, currentConfig.General.Tun.Stack)
-		//if tunListener != nil {
-		//	log.Infoln("TUN address: %v", tunListener.Address())
-		//} else {
-		//	tunHandler.close()
-		//	return false
-		//}
+		initTunHook()
+		tunListener, _ := t.Start(fd, currentConfig.General.Tun.Device, currentConfig.General.Tun.Stack)
+		if tunListener != nil {
+			log.Infoln("TUN address: %v", tunListener.Address())
+		} else {
+			tunHandler.close()
+			return false
+		}
 		//tunHandler.listener = tunListener
 		//now := time.Now()
 		//runTime = &now
