@@ -65,9 +65,9 @@ Future<void> _service(List<String> flags) async {
   vpn?.addListener(
     _VpnListenerWithService(
       onStarted: (int fd) {
-        commonPrint.log("vpn started fd: $fd");
-        final time = clashLibHandler.startTun(fd);
-        commonPrint.log("vpn start tun time: $time");
+        // commonPrint.log("vpn started fd: $fd");
+        // final time = clashLibHandler.startTun(fd);
+        // commonPrint.log("vpn start tun time: $time");
       },
       onDnsChanged: (String dns) {
         clashLibHandler.updateDns(dns);
