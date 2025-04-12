@@ -39,7 +39,7 @@ jobs:
             echo "当前 main 分支已经是最新，不需要合并。"
           else
             echo "合并 upstream/main..."
-            git merge upstream/main --no-edit || { echo "合并失败"; exit 1; }
+            git merge upstream/main --no-edit --allow-unrelated-histories || { echo "合并失败"; exit 1; }
           fi
 
       - name: Push changes to origin
